@@ -8,14 +8,13 @@ import com.aligonggoo.aligonggoocrawler.exception.NotAvailableException;
 import com.aligonggoo.aligonggoocrawler.exception.RestartException;
 import com.aligonggoo.aligonggoocrawler.mq.OutputRabbitMQ;
 import com.aligonggoo.aligonggoocrawler.util.AliProductUtil;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -26,7 +25,7 @@ public class MQService {
     private final AliProductUtil aliProductUtil;
     private final ApplicationContext applicationContext;
 
-    public void processURL(URLParsingDto urlParsingDto) {
+    public void processURL(URLParsingDto urlParsingDto) throws RestartException {
         AliProductInfo aliProductInfo;
         try {
             aliProductInfo = aliProductUtil.getProductInfo(urlParsingDto.getUrl());
@@ -38,18 +37,16 @@ public class MQService {
                 errorDto = CrawlerErrorDto.builder()
                         .url(urlParsingDto.getUrl())
                         .message("HTTP GET Request Fail")
-                        .stackTrace(e.getStackTrace().toString())
+                        .stackTrace(Arrays.toString(e.getStackTrace()))
                         .errorType(CrawlerErrorDto.ErrorType.LOG)
-                        .time(LocalDateTime.now().withNano(0))
                         .build();
             } else if (e instanceof NotAvailableException) {
                 log.error("Not Available Exception");
                 errorDto = CrawlerErrorDto.builder()
                         .url(urlParsingDto.getUrl())
                         .message("Not Available Exception")
-                        .stackTrace(e.getStackTrace().toString())
-                        .errorType(CrawlerErrorDto.ErrorType.LOG)
-                        .time(LocalDateTime.now().withNano(0))
+                        .stackTrace(Arrays.toString(e.getStackTrace()))
+                        .errorType(CrawlerErrorDto.ErrorType.NOT_AVAILABLE)
                         .build();
             } else if (e instanceof RestartException) {
                 log.error("Restart Exception");
@@ -57,10 +54,11 @@ public class MQService {
                 errorDto = CrawlerErrorDto.builder()
                         .url(urlParsingDto.getUrl())
                         .message("Restart Exception")
-                        .stackTrace(e.getStackTrace().toString())
+                        .stackTrace(Arrays.toString(e.getStackTrace()))
                         .errorType(CrawlerErrorDto.ErrorType.RESTART)
-                        .time(LocalDateTime.now().withNano(0))
                         .build();
+                outputRabbitMQ.sendCrawlerError(errorDto);
+                throw new RestartException();
             } else {
                 log.error("Unknown Exception");
                 errorDto = CrawlerErrorDto.builder().build();

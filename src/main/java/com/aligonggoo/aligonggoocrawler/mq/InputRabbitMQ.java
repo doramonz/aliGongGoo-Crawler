@@ -13,7 +13,7 @@ public class InputRabbitMQ implements InputQueue {
     private final MQService mqService;
 
     @RabbitListener(queues = "${rabbitmq.inputQueue.name}", id = "inputQueue")
-    public void receiveMessage(URLParsingDto urlParsingDto) {
+    public void receiveMessage(URLParsingDto urlParsingDto) throws Exception {
         mqService.processURL(urlParsingDto);
     }
 }

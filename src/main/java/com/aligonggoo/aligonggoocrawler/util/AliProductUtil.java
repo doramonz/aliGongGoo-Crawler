@@ -53,7 +53,7 @@ public class AliProductUtil {
             String imgageUrl = "https:" + jsonObject.get("imageUrl").getAsString();
             String title = jsonObject.get("title").getAsString();
             Integer price = Integer.valueOf(jsonObject.get("localizedMinPriceInfo").getAsString().split("\\|")[1].split("\\|")[0]);
-            aliProductInfo = new AliProductInfo(imgageUrl, title, price);
+            aliProductInfo = new AliProductInfo(imgageUrl, title, price, url);
         } catch (Exception e) {
             throw new NotAvailableException();
         }
