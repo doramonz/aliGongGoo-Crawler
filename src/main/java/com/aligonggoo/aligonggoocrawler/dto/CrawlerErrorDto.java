@@ -3,7 +3,6 @@ package com.aligonggoo.aligonggoocrawler.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 
@@ -16,9 +15,7 @@ public class CrawlerErrorDto {
         RESTART, NOT_AVAILABLE, LOG
     }
 
-    @Value("${instance.id}")
     private String instanceId;
-
     private ErrorType errorType;
     private String message;
     private String url;

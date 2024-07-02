@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class MQService {
+
+    @Value("${instance.id}")
+    private String instanceId;
 
     private final OutputRabbitMQ outputRabbitMQ;
     private final AliProductUtil aliProductUtil;
@@ -39,6 +43,7 @@ public class MQService {
                         .message("HTTP GET Request Fail")
                         .stackTrace(Arrays.toString(e.getStackTrace()))
                         .errorType(CrawlerErrorDto.ErrorType.LOG)
+                        .instanceId(instanceId)
                         .build();
             } else if (e instanceof NotAvailableException) {
                 log.error("Not Available Exception");
@@ -47,6 +52,7 @@ public class MQService {
                         .message("Not Available Exception")
                         .stackTrace(Arrays.toString(e.getStackTrace()))
                         .errorType(CrawlerErrorDto.ErrorType.NOT_AVAILABLE)
+                        .instanceId(instanceId)
                         .build();
             } else if (e instanceof RestartException) {
                 log.error("Restart Exception");
@@ -56,6 +62,7 @@ public class MQService {
                         .message("Restart Exception")
                         .stackTrace(Arrays.toString(e.getStackTrace()))
                         .errorType(CrawlerErrorDto.ErrorType.RESTART)
+                        .instanceId(instanceId)
                         .build();
                 outputRabbitMQ.sendCrawlerError(errorDto);
                 throw new RestartException();
